@@ -1,13 +1,15 @@
-# Computer Vision : Single Object Tracking Method Comparison and Implementation
+# INSA Télécom Class : PRS, Programmation Réseau et Système
 
-## Code
+## Pedagogical Team :
 
-* To Do
-* ...
+* Razvan Stanica
+* Oana IOVA
 
-**https://fr.overleaf.com/read/qbknmprkqpcg**
+**Lorenzo CAMARGO answers for the diferent projects**
 
-## Report
+## Objectives
 
-* To Do
-* find **tutor**
+* Make the link between "network" and "programming"
+* Understand the role and the working of the transport layer
+* First use of the Sockets API
+* Coded in C
