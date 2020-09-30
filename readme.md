@@ -5,7 +5,7 @@
 * Razvan Stanica
 * Oana IOVA
 
-**Lorenzo CAMARGO answers for the diferent projects**
+**Lorenzo CAMARGO answers for the different projects**
 
 ## Objectives
 

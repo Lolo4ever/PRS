@@ -91,6 +91,8 @@ Vous avez établi une connexion entre le serveur et le client. Tout ce qu’il v
 
 **Question 8 : Donnez le code utilisé pour transmettre et recevoir des messages coté serveur.**
 **Answer :** 
+
+
         /*reception message*/
 		char recvBuff[100];
 		memset(recvBuff, '\0', sizeof(recvBuff));
@@ -108,6 +110,8 @@ Vous avez établi une connexion entre le serveur et le client. Tout ce qu’il v
 
 **Question 9 : Donnez le code utilisé pour transmettre et recevoir des messages coté client.**
 **Answer :**
+
+
         /*Transmettre message*/
 		char sendBuff[1024];
     	memset(sendBuff, '\0', sizeof(sendBuff));
