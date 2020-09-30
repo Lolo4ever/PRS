@@ -19,20 +19,20 @@ Dans les fichiers **serveur.c** et **client.c**, créez une socket TCP et affich
 
 Dans le cas d’une valeur négative du descripteur de fichier, la socket n’a pas été créé ecorrectement. Traitez cette possibilité d’erreur dans votre code en arrêtant l’exécution du programme. De manière générale, toutes les fonctions de l’API Sockets retournent des valeurs int, inférieures à 0 en cas d’erreur. Pensez à traiter à chaque appel ces erreurs possibles ; ça peut être très important pour le débuggage.
 
-Note : Certains systèmes d’exploitation gardent la socket bloquée même après l’arrêt du processus qui l’utilisait, au cas où il reste des packets entransit. Cependant, ce mécanisme peut poser des problèmes, surtout dans une phase de développement quand on veut pouvoir tuer des processus et les relancer sur la même socket. La fonction **setsockopt()** permet de modifier certains paramètres de la socket, dont le paramètre SO_REUSEADDR, unevariable booléenne qui permet (ou pas) la réutilisation immédiate de la socket. Par défaut à 0 (faux), ce paramètre peut être passé à 1 (vrai) en utilisant le code suivant :
+Note : Certains systèmes d’exploitation gardent la socket bloquée même après l’arrêt du processus qui l’utilisait, au cas où il reste des packets entransit. Cependant, ce mécanisme peut poser des problèmes, surtout dans une phase de développement quand on veut pouvoir tuer des processus et les relancer sur la même socket. La fonction **setsockopt()** permet de modifier certains paramètres de la socket, dont le paramètre SO_REUSEADDR, unevariable booléenne qui permet (ou pas) la réutilisation immédiate de la socket. Par défaut à 0 (faux), ce paramètre peut être passé à 1 (vrai) en utilisant le code suivant:
 
 **int reuse= 1 ;setsockopt(descripteur, SOL_SOCKET, SO_REUSEADDR,&reuse, sizeof(reuse)) ;**
 
 La socket que vous venez de créer n’est pour l’instant pas associée à la couche réseau et elle peut être utilisée soit du côté client, soit du côté serveur. Pour le serveur, il faut faire le lien entre cette socket et un couple (adresse IP, port). Pour ce faire, vous devez utilisez la structure sockaddr, qui est un container générique pour tout type d’adresse réseau. sockaddr utilise une représentation opaque, dans un format chaine de caractères suffisamment grand pour toute famille d’adresses. Pour simplifier la manipulation des adresses, dans le cas d’une couche réseau IP, on utilise struct sockaddr_in, définie dans l’en-tête <netinet/in.h>, qui a la même taille qu’une structure sockaddr, mais une représentation interne différente. Cela facilite un certain nombre d’opérations, mais il ne faut pas oublier que struct sockaddr_in n’est a priori pas connue par les fonctions de l’API Sockets, qui sont définies avec des paramètres struct sockaddr. Il ne faut donc pas oublier de faire un cast chaque fois quand vous passez une variable sockaddr_in comme paramètre d’une telle fonction.
 
-Note : Il est conseillé de remettre à zéro une structure struct sockaddr_in avant son initialisation, pour éviter tout problème d’accès à des zones mémoire libérées mais non effacées. Une possibilité pour cette remise à zéro utilise la fonction memset(), définie dans  <string.h> : 
+Note : Il est conseillé de remettre à zéro une structure struct sockaddr_in avant son initialisation, pour éviter tout problème d’accès à des zones mémoire libérées mais non effacées. Une possibilité pour cette remise à zéro utilise la fonction memset(), définie dans  <string.h>: 
 
 **struct sockaddr_in my_addr ; memset((char*)&my_addr, 0, sizeof(my_addr)) ;**
 
 Pour pouvoir utiliser une structure sockaddr_in, il faut initialiser trois de ses champs :
 * sin_family: qui doit correspondre à la famille (au domaine) de la socket à laquelle on associera l’adresse.
 * sin_port: le numéro du port sur lequel la socket sera ouverte.
-* sin_addr: l’adresse réseau associée à la socket (dans notre cas une adresse IP). Ce champ est, à son tour, une structure struct in_addr. Pour l’initialiser, il faut pratiquement initialiser le champs_addr de la structure sin_addr. Par exemple,cela peut se faire avec le code suivant :
+* sin_addr: l’adresse réseau associée à la socket (dans notre cas une adresse IP). Ce champ est, à son tour, une structure struct in_addr. Pour l’initialiser, il faut pratiquement initialiser le champs_addr de la structure sin_addr. Par exemple,cela peut se faire avec le code suivant:
 
     **my_addr.sin_addr.s_addr= INADDR_ANY ;**
 
@@ -98,7 +98,7 @@ A l’intérieur de cette boucle infinie, du côté serveur, vous devez rester e
 Vous avez établi une connexion entre le serveur et le client. Tout ce qu’il vous reste à faire maintenant est de transmettre et de recevoir des messages. Pour ce faire, vous pouvez simplement écrire et lire sur les sockets correspondants, en utilisant les fonctions read() et write() définies dans l’entête <unistd.h>. Les deux fonctions ont la même signature :
 * descripteur- le descripteur de la socket utilisée pour lire ou écrire ;
 * buffer- un tableau de caractères, qui représente le buffer dans lequel vous allez lire ou écrire ;
-* taille- un entier qui donne le nombre d’octets écrits dans le buffer (dans le cas de write()) ou la taille maximale du buffer de lecture (pour read()) .
+* taille- un entier qui donne le nombre d’octets écrits dans le buffer (dans le cas de write()) ou la taille maximale du buffer de lecture (pour read()).
 
 **Question 8 : Donnez le code utilisé pour transmettre et recevoir des messages coté serveur.**
 
@@ -145,7 +145,7 @@ Faites attention, les sockets TCP transportent un stream d’octets, pas un stre
 
 **Answer :** *L'adresse IP du client est 127.0.0.1 et le port est 39570 (quand on converti du format réseau à une valeur décimale avec les fionctions inet_ntoa et ntohs pour passer au dela des problème de bit de poids faible/fort)*
 
-Côté client, si vous souhaitez découvrir le port de la connexion (du client), vous pouvez utiliser la fonction : 
+Côté client, si vous souhaitez découvrir le port de la connexion (du client), vous pouvez utiliser la fonction: 
 
 **getsockname (int sockfd, struct sockaddr *addr, socklen_t *addrlen)**.
 
