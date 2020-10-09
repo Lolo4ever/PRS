@@ -48,6 +48,7 @@
 **Question 10**: Donnez un squelette du code utilisée dans la boucle inffinie du serveur.
 
 **Answer 10**: 
+
 while(1){
 	FD_ZERO(&socket_set);
     FD_SET(server_descTCP,&socket_set);
