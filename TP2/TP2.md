@@ -49,21 +49,21 @@
 
 **Answer 10**: 
 
-while(1){
-	FD_ZERO(&socket_set);
-    FD_SET(server_descTCP,&socket_set);
-    FD_SET(server_descUDP,&socket_set);
-    
-	selector = select(max,&socket_set, NULL,NULL,NULL);	
-	
+	while(1){
+		FD_ZERO(&socket_set);
+		FD_SET(server_descTCP,&socket_set);
+		FD_SET(server_descUDP,&socket_set);
+		
+		selector = select(max,&socket_set, NULL,NULL,NULL);	
+		
 
-    if(FD_ISSET(server_descTCP, &socket_set)){
-        //accept TCP Client
-        //Ouvre un processus pour la nouvelle écoute
-        //code pour TCP
-    }
+		if(FD_ISSET(server_descTCP, &socket_set)){
+			//accept TCP Client
+			//Ouvre un processus pour la nouvelle écoute
+			//code pour TCP
+		}
 
-	if(FD_ISSET(server_descUDP,&socket_set)){
-        //code pour UDP
-	}    
-}
+		if(FD_ISSET(server_descUDP,&socket_set)){
+			//code pour UDP
+		}    
+	}
