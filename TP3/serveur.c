@@ -94,11 +94,28 @@ int main (int argc, char *argv[]) {
 }    
 
 
+
+
+
+
+
+
+
+
 /*-------------------------------------------------------------------------------------------------------*/
 /*-------------------------------------------------------------------------------------------------------*/
 /*-------------------------------------------FUNCTIONS----------------------------------------------------*/
 /*-------------------------------------------------------------------------------------------------------*/
 /*-------------------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
 
 /*------------------------------------------------ACKs---------------------------------------------------*/
 int ack(struct sockaddr_in clientUDP, int server_descUDP, char *buffer){
@@ -125,42 +142,85 @@ int ack(struct sockaddr_in clientUDP, int server_descUDP, char *buffer){
   return(0);
 }
 
-/*--------------------------------------WAIT FOR ACK---------------------------------------*/
-int waitForAck(struct sockaddr_in clientUDP, int server_descUDP, char *buffer){
-  char buffs[RCVSIZE];
+
+
+
+
+
+
+
+/*--------------------------------------SEND AND WAIT FOR ACK---------------------------------------*/
+int sendAndWaitForAck(struct sockaddr_in clientUDP, int server_descUDP, char *segment, int segmentSize, int timeoutU){
+  
+  /*instanciate the variables for sending and receiving*/
+  int rcv_size = 12;
+  char ack_rcv[rcv_size];
   int n;
   int len = sizeof(clientUDP);
-  int selector;
 
-  //File descriptor set for selector
+  /*File descriptor set for selector*/
   fd_set socket_set;
-  //while(1);
+
+  /*instanciate the time structures*/
+  struct timeval stop, start, timeout;
+  
+  /*send segment to client*/
+  sendto(server_descUDP, (const char *)segment, segmentSize, MSG_CONFIRM, (const struct sockaddr *) &clientUDP, len); 
+  printf("Meesage sent\n");
+
+  /*setup the fd set with the proper file descriptor*/
   FD_ZERO(&socket_set);
   FD_SET(server_descUDP,&socket_set);
 
-  /* Initialize the timeout data structure. */
-  struct timeval timeout;
-  timeout.tv_sec = 1;
-  timeout.tv_usec = 0;
+  /*initialize the proper timeout time*/
+  timeout.tv_sec = 0;
+  timeout.tv_usec = timeoutU;
 
-  selector = select(1,&socket_set, NULL,NULL,&timeout);
+  //while(1){
+  /*start timer*/
+  gettimeofday(&start, NULL);
 
-  //teste si il y a écriture dans la socjet TCP:
-  if(FD_ISSET(server_descUDP, &socket_set)){
-    n = recvfrom(server_descUDP, (char *)buffs, RCVSIZE, MSG_WAITALL, ( struct sockaddr *) &clientUDP, &len); 
-    buffs[n]='\0';
-    //get out of while
+  /*wait for segment to arrive or go out because of timeout*/
+  if( select(6,&socket_set, NULL,NULL,&timeout) == 0){
+    printf("TIME OUT :(\n");
   }else{
-    sendto(server_descUDP, (const char *)buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr *) &clientUDP, len); 
+    gettimeofday(&stop, NULL);
+    n = recvfrom(server_descUDP, (char *)ack_rcv, rcv_size, MSG_WAITALL, ( struct sockaddr *) &clientUDP, &len);
+    printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec); 
+    ack_rcv[n]='\0';
+    printf("ack from client : %s\n",ack_rcv);
   }
+    //selector = select(5,&socket_set, NULL,NULL,&timeout); //if return 0 then timed out
+    //selector = select(5,&socket_set, NULL,NULL,NULL);
 
+    //teste si il y a écriture dans la socket :
+    /*printf("waiting for ack\n");
+    if(FD_ISSET(server_descUDP, &socket_set)){
+      gettimeofday(&current_time, NULL);
+      if( (current_time.tv_sec - start.tv_sec) * 1000000 + current_time.tv_usec - start.tv_usec < 100 ){
+        n = recvfrom(server_descUDP, (char *)ack_rcv, rcv_size, MSG_WAITALL, ( struct sockaddr *) &clientUDP, &len);
+        gettimeofday(&stop, NULL);
+        printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec); 
+        ack_rcv[n]='\0';
+        printf("ack from client : %s\n",ack_rcv);
+        //get out of while
+      }else{
+        printf("BAAAAAAAAAAD BOYYYYY\n");
+      }*/
+  //}
 
-  n = recvfrom(server_descUDP, (char *)buffs, RCVSIZE, MSG_WAITALL, ( struct sockaddr *) &clientUDP, &len);
-  buffs[n]='\0';
+  /*set the buffers to 0*/
+  memset(ack_rcv, '\0', sizeof(rcv_size));
 
-
-
+  return(0);
 }
+
+
+
+
+
+
+
 
 /*--------------------------------3 WAY HANDSHAKE FUNCTION-----------------------------------------------*/
 int threeWayHandshake(struct sockaddr_in clientUDP, int server_descUDP){
@@ -196,6 +256,12 @@ int threeWayHandshake(struct sockaddr_in clientUDP, int server_descUDP){
   return(0);
 }
 
+
+
+
+
+
+/*-----------------------------------FRAGMENT FILE---------------------------------------------*/
 int fragmentFile(struct sockaddr_in clientUDP, int server_descUDP){
   int len = sizeof(clientUDP);
 
@@ -256,8 +322,8 @@ int fragmentFile(struct sockaddr_in clientUDP, int server_descUDP){
               remain -= toCpy;
           
               /*set the segment ID in the header*/
-              sprintf(header, "%d", i);
               i++;
+              sprintf(header, "%d", i);
               memcpy(sgmnt,"00000000",headerSize);
               if(i<10){
                 memcpy(sgmnt+7,header,headerSize);
@@ -266,21 +332,22 @@ int fragmentFile(struct sockaddr_in clientUDP, int server_descUDP){
               }else if(i<1000){
                 memcpy(sgmnt+5,header,headerSize);
               }
+              
 
               /*Put the chunk to send in the segment*/
               memcpy(sgmnt+8,chunk,sizeof(chunk));
 
-              /*Send messages to client*/
-              sendto(server_descUDP, (const char *)sgmnt, segmentSize, MSG_CONFIRM, (const struct sockaddr *) &clientUDP, len); 
+              /*Send messages to client and wait for ack*/
+              sendAndWaitForAck(clientUDP,server_descUDP,sgmnt,segmentSize,10);
+              //sendto(server_descUDP, (const char *)sgmnt, segmentSize, MSG_CONFIRM, (const struct sockaddr *) &clientUDP, len); 
 
 
               /*TO WAIT*/
-              //printf("sended : %d\n",chunkSize);
-              struct timeval timeout;
+              /*struct timeval timeout;
               int selector;
-              timeout.tv_sec = 1;
-              timeout.tv_usec = 0;
-              selector = select(NULL,NULL, NULL,NULL,&timeout);
+              timeout.tv_sec = 0;
+              timeout.tv_usec = 500000;
+              selector = select(NULL,NULL, NULL,NULL,&timeout);*/
 
 
               /*Reset the buffers*/

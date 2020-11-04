@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
   //Receiving new files!!!!!!!!!!!!!!!!-------------------------------------------
   FILE *outFile;
   outFile = fopen("TP3c.pdf", "a");
-  int n=0,len;
+  int n=0,len,ackSize=12;
   int chunkSize = 1016;
   int segmentSize = 1024;
   char *rcv_chunk = NULL;
@@ -105,19 +105,40 @@ int main(int argc, char *argv[]) {
   char *sgmnt = NULL;
   sgmnt = malloc(sizeof(char) * (segmentSize + 1));
   char header[8];
-  int rss=0;
+  int nbseq=0;
+  char *ack;
+  ack = malloc(sizeof(char) * (12 + 1));
   while(1){
 
+    //receive file
     n = recvfrom(sockfd, (char *)sgmnt, segmentSize, MSG_WAITALL, ( struct sockaddr *) &servaddr, &len);
     sgmnt[n] = '\0';
+
+    //parse file : first 8 is header, rest is data
+    memcpy(header,sgmnt,8);
+    header[8]='\0';
     rcv_chunk = sgmnt + 8;
-    //memcpy(header,sgmnt,8);
-    printf("received:%d\n",n);
+    nbseq = atoi(header);
+    printf("received : %s\n",header);
+
     //appaend in file
-    //rss = n - 8;
-    //rcv_chunk[rss]='\0';
     fwrite(rcv_chunk,sizeof(char),chunkSize,outFile);//toCPy
+
+    //ACK each file
+    memcpy(ack,"ACK_00000000",ackSize);
+    memcpy(ack+4,header,8);
+    //WAIT
+    struct timeval timeot;
+    int selectr;
+    timeot.tv_sec = 0;
+    timeot.tv_usec = 90;
+    selectr = select(NULL,NULL, NULL,NULL,&timeot);
+    sendto(sockfd, (const char *)ack, ackSize, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+    printf("sending : %s\n",ack);
+    
+
     //to delete
+    memset(ack, '\0',ackSize);
     memset(rcv_chunk, '\0', chunkSize);
     memset(sgmnt, '\0', segmentSize);
     memset(header,'\0',8);
